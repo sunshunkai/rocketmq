@@ -41,7 +41,7 @@ public class FilterAPI {
         SubscriptionData subscriptionData = new SubscriptionData();
         subscriptionData.setTopic(topic);
         subscriptionData.setSubString(subString);
-
+        // 订阅所有信息
         if (null == subString || subString.equals(SubscriptionData.SUB_ALL) || subString.length() == 0) {
             subscriptionData.setSubString(SubscriptionData.SUB_ALL);
         } else {

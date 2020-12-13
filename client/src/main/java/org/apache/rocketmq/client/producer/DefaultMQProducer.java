@@ -64,6 +64,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Wrapping internal implementations for virtually all methods presented in this class.
+     * 生产者默认实现类
      */
     protected final transient DefaultMQProducerImpl defaultMQProducerImpl;
 
@@ -76,6 +77,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      * </p>
      *
      * See {@linktourl http://rocketmq.apache.org/docs/core-concept/} for more discussion.
+     * 生产者组,这是必须传的参数。
      */
     private String producerGroup;
 
@@ -91,11 +93,14 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Timeout for sending messages.
+     * 发送超时时间
      */
     private int sendMsgTimeout = 3000;
 
     /**
      * Compress message body threshold, namely, message body larger than 4k will be compressed on default.
+     * 消息体的容量上限,超过上限时消息体会通过ZIP压缩
+     * @see DefaultMQProducerImpl#tryToCompressMessage(org.apache.rocketmq.common.message.Message)
      */
     private int compressMsgBodyOverHowmuch = 1024 * 4;
 
@@ -104,6 +109,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      * </p>
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
+     * 同步发送失败重试次数
      */
     private int retryTimesWhenSendFailed = 2;
 
@@ -112,6 +118,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      * </p>
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
+     * 异步发送重试次数
      */
     private int retryTimesWhenSendAsyncFailed = 2;
 

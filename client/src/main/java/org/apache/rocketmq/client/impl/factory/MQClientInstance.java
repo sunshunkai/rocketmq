@@ -98,6 +98,7 @@ public class MQClientInstance {
     private final NettyClientConfig nettyClientConfig;
     private final MQClientAPIImpl mQClientAPIImpl;
     private final MQAdminImpl mQAdminImpl;
+    // 本地缓存Topic路由信息
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
     private final Lock lockNamesrv = new ReentrantLock();
     private final Lock lockHeartbeat = new ReentrantLock();
@@ -259,6 +260,7 @@ public class MQClientInstance {
     }
 
     private void startScheduledTask() {
+        // 更新 namesrvAddr 地址
         if (null == this.clientConfig.getNamesrvAddr()) {
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
@@ -273,6 +275,7 @@ public class MQClientInstance {
             }, 1000 * 10, 1000 * 60 * 2, TimeUnit.MILLISECONDS);
         }
 
+        // 更新 topic 路由信息
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -285,6 +288,7 @@ public class MQClientInstance {
             }
         }, 10, this.clientConfig.getPollNameServerInterval(), TimeUnit.MILLISECONDS);
 
+        // 清理下线的 broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -298,6 +302,7 @@ public class MQClientInstance {
             }
         }, 1000, this.clientConfig.getHeartbeatBrokerInterval(), TimeUnit.MILLISECONDS);
 
+        // 持久化 Consumer 的 offset 信息
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -310,6 +315,7 @@ public class MQClientInstance {
             }
         }, 1000 * 10, this.clientConfig.getPersistConsumerOffsetInterval(), TimeUnit.MILLISECONDS);
 
+        // 调整线程池
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -387,6 +393,7 @@ public class MQClientInstance {
     }
     /**
      * Remove offline broker
+     * 清理已经下线的Broker
      */
     private void cleanOfflineBroker() {
         try {
@@ -432,6 +439,9 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 检查Client是否在Broker中有效
+     */
     public void checkClientInBroker() throws MQClientException {
         Iterator<Entry<String, MQConsumerInner>> it = this.consumerTable.entrySet().iterator();
 
@@ -470,6 +480,9 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 向所有Broker发送心跳请求
+     */
     public void sendHeartbeatToAllBrokerWithLock() {
         if (this.lockHeartbeat.tryLock()) {
             try {
@@ -511,6 +524,9 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 从多个Namesrv中获取最新topic路由信息,更新本地缓存
+     */
     public boolean updateTopicRouteInfoFromNameServer(final String topic) {
         return updateTopicRouteInfoFromNameServer(topic, false, null);
     }
@@ -869,6 +885,9 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 在本地注册一个消费者
+     */
     public boolean registerConsumer(final String group, final MQConsumerInner consumer) {
         if (null == group || null == consumer) {
             return false;
@@ -883,6 +902,9 @@ public class MQClientInstance {
         return true;
     }
 
+    /**
+     * 取消本地注册的生产者
+     */
     public void unregisterConsumer(final String group) {
         this.consumerTable.remove(group);
         this.unregisterClientWithLock(null, group);
@@ -952,6 +974,9 @@ public class MQClientInstance {
         this.unregisterClientWithLock(group, null);
     }
 
+    /**
+     * 注册一个管理者实例
+     */
     public boolean registerAdminExt(final String group, final MQAdminExtInner admin) {
         if (null == group || null == admin) {
             return false;
@@ -970,10 +995,16 @@ public class MQClientInstance {
         this.adminExtTable.remove(group);
     }
 
+    /**
+     * 立即执行一次Rebalance
+     */
     public void rebalanceImmediately() {
         this.rebalanceService.wakeup();
     }
 
+    /**
+     * 对于所有已经注册消费者实例,执行一次Rebalance
+     */
     public void doRebalance() {
         for (Map.Entry<String, MQConsumerInner> entry : this.consumerTable.entrySet()) {
             MQConsumerInner impl = entry.getValue();
@@ -995,6 +1026,9 @@ public class MQClientInstance {
         return this.consumerTable.get(group);
     }
 
+    /**
+     * 在本地缓存中查找Master或者Slave Broker信息
+     */
     public FindBrokerResult findBrokerAddressInAdmin(final String brokerName) {
         String brokerAddr = null;
         boolean slave = false;
@@ -1025,6 +1059,9 @@ public class MQClientInstance {
         return null;
     }
 
+    /**
+     * 在本地缓存中查询Master Broker地址
+     */
     public String findBrokerAddressInPublish(final String brokerName) {
         HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
         if (map != null && !map.isEmpty()) {
@@ -1034,6 +1071,9 @@ public class MQClientInstance {
         return null;
     }
 
+    /**
+     * 在本地缓存中查找Master Broker地址
+     */
     public FindBrokerResult findBrokerAddressInSubscribe(
         final String brokerName,
         final long brokerId,
@@ -1074,6 +1114,9 @@ public class MQClientInstance {
         return 0;
     }
 
+    /**
+     * 查询消费者id列表
+     */
     public List<String> findConsumerIdList(final String topic, final String group) {
         String brokerAddr = this.findBrokerAddrByTopic(topic);
         if (null == brokerAddr) {
@@ -1092,6 +1135,9 @@ public class MQClientInstance {
         return null;
     }
 
+    /**
+     * 通过Topic名字查找Broker地址
+     */
     public String findBrokerAddrByTopic(final String topic) {
         TopicRouteData topicRouteData = this.topicRouteTable.get(topic);
         if (topicRouteData != null) {
@@ -1106,6 +1152,9 @@ public class MQClientInstance {
         return null;
     }
 
+    /**
+     * 重置消费位点
+     */
     public void resetOffset(String topic, String group, Map<MessageQueue, Long> offsetTable) {
         DefaultMQPushConsumerImpl consumer = null;
         try {
@@ -1154,6 +1203,9 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * 获取一个订阅关系中每个队列的消费进度
+     */
     public Map<MessageQueue, Long> getConsumerStatus(String topic, String group) {
         MQConsumerInner impl = this.consumerTable.get(group);
         if (impl != null && impl instanceof DefaultMQPushConsumerImpl) {
@@ -1199,6 +1251,9 @@ public class MQClientInstance {
         return topicRouteTable;
     }
 
+    /**
+     * 直接将消息发送给指定的消费者消费
+     */
     public ConsumeMessageDirectlyResult consumeMessageDirectly(final MessageExt msg,
         final String consumerGroup,
         final String brokerName) {
@@ -1213,6 +1268,9 @@ public class MQClientInstance {
         return null;
     }
 
+    /**
+     * 获取消费者的消费统计信息
+     */
     public ConsumerRunningInfo consumerRunningInfo(final String consumerGroup) {
         MQConsumerInner mqConsumerInner = this.consumerTable.get(consumerGroup);
 

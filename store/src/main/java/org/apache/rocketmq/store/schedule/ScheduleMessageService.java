@@ -46,7 +46,7 @@ import org.apache.rocketmq.store.config.StorePathConfigHelper;
 
 public class ScheduleMessageService extends ConfigManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
-
+    // 延迟Topic
     public static final String SCHEDULE_TOPIC = "SCHEDULE_TOPIC_XXXX";
     private static final long FIRST_DELAY_TIME = 1000L;
     private static final long DELAY_FOR_A_WHILE = 100L;
@@ -260,6 +260,7 @@ public class ScheduleMessageService extends ConfigManager {
         }
 
         public void executeOnTimeup() {
+            // 获取消费者信息
             ConsumeQueue cq =
                 ScheduleMessageService.this.defaultMessageStore.findConsumeQueue(SCHEDULE_TOPIC,
                     delayLevel2QueueId(delayLevel));
@@ -267,6 +268,7 @@ public class ScheduleMessageService extends ConfigManager {
             long failScheduleOffset = offset;
 
             if (cq != null) {
+                // 读取消息
                 SelectMappedBufferResult bufferCQ = cq.getIndexBuffer(this.offset);
                 if (bufferCQ != null) {
                     try {
@@ -298,13 +300,16 @@ public class ScheduleMessageService extends ConfigManager {
                             long countdown = deliverTimestamp - now;
 
                             if (countdown <= 0) {
+                                // 获取消息
                                 MessageExt msgExt =
                                     ScheduleMessageService.this.defaultMessageStore.lookMessageByOffset(
                                         offsetPy, sizePy);
 
                                 if (msgExt != null) {
                                     try {
+                                        // 还原消息信息topic名称等信息
                                         MessageExtBrokerInner msgInner = this.messageTimeup(msgExt);
+                                        // 将消息持久化到commitLog中
                                         PutMessageResult putMessageResult =
                                             ScheduleMessageService.this.writeMessageStore
                                                 .putMessage(msgInner);
