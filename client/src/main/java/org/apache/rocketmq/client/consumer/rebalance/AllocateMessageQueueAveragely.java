@@ -25,6 +25,7 @@ import org.apache.rocketmq.common.message.MessageQueue;
 
 /**
  * Average Hashing queue algorithm
+ * 平均分配,默认
  */
 public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrategy {
     private final InternalLogger log = ClientLogger.getLog();
@@ -50,13 +51,19 @@ public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrate
                 cidAll);
             return result;
         }
-
+        // 自己是当前的第几个。 cidALL和 MQALL 在外层以及排序
         int index = cidAll.indexOf(currentCID);
+        // 如果mod不为零，说明不能完全平均分。
         int mod = mqAll.size() % cidAll.size();
+        // 如果队列的长度小于消费者的个数，那么就一个一个队列，屁股后面的就没有队列消费。
+        // 如果mod为0的话 那么大家完全平均分
+        // 如果mod不为0，那么当前消费者所处的位置小于mod，那就要多负载一个队列。 大于mod就消费是平均数
         int averageSize =
             mqAll.size() <= cidAll.size() ? 1 : (mod > 0 && index < mod ? mqAll.size() / cidAll.size()
                 + 1 : mqAll.size() / cidAll.size());
+        // 决定从消费队列的开始位置
         int startIndex = (mod > 0 && index < mod) ? index * averageSize : index * averageSize + mod;
+        // 决定到底消费几个队列
         int range = Math.min(averageSize, mqAll.size() - startIndex);
         for (int i = 0; i < range; i++) {
             result.add(mqAll.get((startIndex + i) % mqAll.size()));
