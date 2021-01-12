@@ -91,6 +91,7 @@ public class NamesrvStartup {
                 InputStream in = new BufferedInputStream(new FileInputStream(file));
                 properties = new Properties();
                 properties.load(in);
+                //读取properties文件，加载数据到内存对象中
                 MixAll.properties2Object(properties, namesrvConfig);
                 MixAll.properties2Object(properties, nettyServerConfig);
 
@@ -153,7 +154,7 @@ public class NamesrvStartup {
                 return null;
             }
         }));
-
+        // 启动Netty服务器
         controller.start();
 
         return controller;

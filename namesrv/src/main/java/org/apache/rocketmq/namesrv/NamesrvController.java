@@ -74,16 +74,16 @@ public class NamesrvController {
     }
 
     public boolean initialize() {
-
+        // KVConfigManager.load加载原来的key-value文件到内存中
         this.kvConfigManager.load();
 
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
-
+        // 初始化nettyRomote线程池，默认8个，该线程池中队列为LinkedBlockingQueue，为无界队列
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-
+        // 注册requestProcessor，默认为DefaultRequestProcessor，用来处理netty接收到的信息
         this.registerProcessor();
-
+        // 启动定时线程，延迟5秒执行，每隔10s判断broker是否依然存活
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -91,14 +91,14 @@ public class NamesrvController {
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
-
+        // 延迟1秒执行，每隔10min打印出所有k-v
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
             public void run() {
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
             }
-        }, 1, 10, TimeUnit.MINUTES);
+        }, 1, 1, TimeUnit.MINUTES);
 
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext

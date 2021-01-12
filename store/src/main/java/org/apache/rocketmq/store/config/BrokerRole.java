@@ -17,7 +17,16 @@
 package org.apache.rocketmq.store.config;
 
 public enum BrokerRole {
+    /**
+     * 异步复制
+     */
     ASYNC_MASTER,
+    /**
+     * 同步复制
+     */
     SYNC_MASTER,
+    /**
+     *
+     */
     SLAVE;
 }

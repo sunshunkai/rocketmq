@@ -52,7 +52,9 @@ public class RouteInfoManager {
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+    // 存活的broker信息
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+    //broker filter
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
     public RouteInfoManager() {
@@ -314,6 +316,7 @@ public class RouteInfoManager {
                     );
 
                     if (brokerData.getBrokerAddrs().isEmpty()) {
+                        // 如果broker集群中你没有broker
                         this.brokerAddrTable.remove(brokerName);
                         log.info("unregisterBroker, remove name from brokerAddrTable OK, {}",
                             brokerName
@@ -338,6 +341,7 @@ public class RouteInfoManager {
                             );
                         }
                     }
+                    // 移除集群中的topic
                     this.removeTopicByBrokerName(brokerName);
                 }
             } finally {

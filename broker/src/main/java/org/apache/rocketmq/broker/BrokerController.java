@@ -228,6 +228,7 @@ public class BrokerController {
     }
 
     public boolean initialize() throws CloneNotSupportedException {
+        // xxxConfigManager.load 加载broker基础数据配置（Topic、消费位点、订阅关系、消费过滤）
         boolean result = this.topicConfigManager.load();
 
         result = result && this.consumerOffsetManager.load();
@@ -258,6 +259,7 @@ public class BrokerController {
 
         if (result) {
             this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.clientHousekeepingService);
+            // VIP通讯层的配置，clone正常通讯的配置对象
             NettyServerConfig fastConfig = (NettyServerConfig) this.nettyServerConfig.clone();
             fastConfig.setListenPort(nettyServerConfig.getListenPort() - 2);
             this.fastRemotingServer = new NettyRemotingServer(fastConfig, this.clientHousekeepingService);
@@ -316,11 +318,12 @@ public class BrokerController {
             this.consumerManageExecutor =
                 Executors.newFixedThreadPool(this.brokerConfig.getConsumerManageThreadPoolNums(), new ThreadFactoryImpl(
                     "ConsumerManageThread_"));
-
+            // 将正常的通讯层对象和VIP通道的通讯层对象与各个请求处理器进行关联，比如将发送消息的请求交给连接消息的请求处理器进行处理
             this.registerProcessor();
 
             final long initialDelay = UtilAll.computeNextMorningTimeMillis() - System.currentTimeMillis();
             final long period = 1000 * 60 * 60 * 24;
+
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
@@ -332,6 +335,7 @@ public class BrokerController {
                 }
             }, initialDelay, period, TimeUnit.MILLISECONDS);
 
+            // 消息进度定时持久化
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
@@ -543,9 +547,13 @@ public class BrokerController {
         this.remotingServer.registerProcessor(RequestCode.SEND_MESSAGE_V2, sendProcessor, this.sendMessageExecutor);
         this.remotingServer.registerProcessor(RequestCode.SEND_BATCH_MESSAGE, sendProcessor, this.sendMessageExecutor);
         this.remotingServer.registerProcessor(RequestCode.CONSUMER_SEND_MSG_BACK, sendProcessor, this.sendMessageExecutor);
+        // 注册接受消息处理器
         this.fastRemotingServer.registerProcessor(RequestCode.SEND_MESSAGE, sendProcessor, this.sendMessageExecutor);
+        // 注册接受消息处理器
         this.fastRemotingServer.registerProcessor(RequestCode.SEND_MESSAGE_V2, sendProcessor, this.sendMessageExecutor);
+        // 注册批量接收消息处理器
         this.fastRemotingServer.registerProcessor(RequestCode.SEND_BATCH_MESSAGE, sendProcessor, this.sendMessageExecutor);
+        // 注册重新消费请求处理器
         this.fastRemotingServer.registerProcessor(RequestCode.CONSUMER_SEND_MSG_BACK, sendProcessor, this.sendMessageExecutor);
         /**
          * PullMessageProcessor
@@ -841,11 +849,11 @@ public class BrokerController {
         if (this.brokerOuterAPI != null) {
             this.brokerOuterAPI.start();
         }
-
+        // Pull长轮询服务
         if (this.pullRequestHoldService != null) {
             this.pullRequestHoldService.start();
         }
-
+        // 清理心跳超时的生产者、消费者、过滤服务器
         if (this.clientHousekeepingService != null) {
             this.clientHousekeepingService.start();
         }
@@ -860,7 +868,7 @@ public class BrokerController {
         }
 
 
-
+        // 将Broker注册到Namesrv
         this.registerBrokerAll(true, false, true);
 
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -1107,6 +1115,10 @@ public class BrokerController {
         return accessValidatorMap;
     }
 
+    /**
+     * role是salve，则同步master信息，role是master则取消同步
+     * @param role
+     */
     private void handleSlaveSynchronize(BrokerRole role) {
         if (role == BrokerRole.SLAVE) {
             if (null != slaveSyncFuture) {
@@ -1133,6 +1145,10 @@ public class BrokerController {
         }
     }
 
+    /**
+     * 将broker身份变成slave
+     * @param brokerId
+     */
     public void changeToSlave(int brokerId) {
         log.info("Begin to change to slave brokerName={} brokerId={}", brokerConfig.getBrokerName(), brokerId);
 
@@ -1155,6 +1171,7 @@ public class BrokerController {
         }
 
         //handle the slave synchronise
+        // 从Master同步信息
         handleSlaveSynchronize(BrokerRole.SLAVE);
 
         try {

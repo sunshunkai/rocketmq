@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.alibaba.fastjson.JSON;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.logging.InternalLogger;
@@ -176,9 +178,13 @@ public class KVConfigManager {
                 log.info("--------------------------------------------------------");
 
                 {
+                    //  调试，打印路由信息
+                    System.out.println("k-v: "+JSON.toJSON(configTable));
+                    //
                     log.info("configTable SIZE: {}", this.configTable.size());
                     Iterator<Entry<String, HashMap<String, String>>> it =
                         this.configTable.entrySet().iterator();
+
                     while (it.hasNext()) {
                         Entry<String, HashMap<String, String>> next = it.next();
                         Iterator<Entry<String, String>> itSub = next.getValue().entrySet().iterator();

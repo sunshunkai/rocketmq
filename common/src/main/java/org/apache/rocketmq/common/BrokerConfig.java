@@ -72,7 +72,7 @@ public class BrokerConfig {
      * Thread numbers for EndTransactionProcessor
      */
     private int endTransactionThreadPoolNums = 8 + Runtime.getRuntime().availableProcessors() * 2;
-
+    // 消费进度持久化时间
     private int flushConsumerOffsetInterval = 1000 * 5;
 
     private int flushConsumerOffsetHistoryInterval = 1000 * 60;
