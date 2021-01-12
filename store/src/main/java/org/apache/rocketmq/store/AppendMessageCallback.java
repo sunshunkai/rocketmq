@@ -21,6 +21,9 @@ import org.apache.rocketmq.common.message.MessageExtBatch;
 
 /**
  * Write messages callback interface
+ * 1、查找即将写入的消息物理Offset
+ * 2、事务消息单独处理
+ * 3、序列化消息
  */
 public interface AppendMessageCallback {
 

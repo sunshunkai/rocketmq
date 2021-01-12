@@ -42,26 +42,37 @@ import org.apache.rocketmq.store.util.LibC;
 import sun.nio.ch.DirectBuffer;
 
 public class MappedFile extends ReferenceResource {
+    // 默认页大小
     public static final int OS_PAGE_SIZE = 1024 * 4;
     protected static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
-
+    // jvm映射虚拟内存总大小
     private static final AtomicLong TOTAL_MAPPED_VIRTUAL_MEMORY = new AtomicLong(0);
-
+    // jvm中mmap数量
     private static final AtomicInteger TOTAL_MAPPED_FILES = new AtomicInteger(0);
+    // 当前写文件位置
     protected final AtomicInteger wrotePosition = new AtomicInteger(0);
+    // 提交位置
     protected final AtomicInteger committedPosition = new AtomicInteger(0);
+    // 刷盘位置
     private final AtomicInteger flushedPosition = new AtomicInteger(0);
+    // 文件大小
     protected int fileSize;
+    // CommitLog 映射文件的读写通道
     protected FileChannel fileChannel;
     /**
      * Message will put to here first, and then reput to FileChannel if writeBuffer is not null.
      */
     protected ByteBuffer writeBuffer = null;
+    // 暂存池
     protected TransientStorePool transientStorePool = null;
     private String fileName;
+    // 映射起始偏移量
     private long fileFromOffset;
+    // 映射文件
     private File file;
+    // 映射的内存对象
     private MappedByteBuffer mappedByteBuffer;
+    // 最后一条消息保存时间
     private volatile long storeTimestamp = 0;
     private boolean firstCreateInQueue = false;
 
@@ -152,9 +163,10 @@ public class MappedFile extends ReferenceResource {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.file = new File(fileName);
+        // 文件名为起始offset
         this.fileFromOffset = Long.parseLong(this.file.getName());
         boolean ok = false;
-
+        // 创建父目录
         ensureDirOK(this.file.getParent());
 
         try {
@@ -275,9 +287,11 @@ public class MappedFile extends ReferenceResource {
 
                 try {
                     //We only append data to fileChannel or mappedByteBuffer, never both.
+                    // 读写分离
                     if (writeBuffer != null || this.fileChannel.position() != 0) {
                         this.fileChannel.force(false);
                     } else {
+                        // 非读写分离
                         this.mappedByteBuffer.force();
                     }
                 } catch (Throwable e) {
@@ -335,6 +349,11 @@ public class MappedFile extends ReferenceResource {
         }
     }
 
+    /**
+     * 检验需要刷盘的页码中的数据是否被刷入磁盘中
+     * @param flushLeastPages
+     * @return
+     */
     private boolean isAbleToFlush(final int flushLeastPages) {
         int flush = this.flushedPosition.get();
         int write = getReadPosition();

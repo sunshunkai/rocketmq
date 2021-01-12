@@ -24,6 +24,10 @@ public abstract class ReferenceResource {
     protected volatile boolean cleanupOver = false;
     private volatile long firstShutdownTimestamp = 0;
 
+    /**
+     * 在映射文件被销毁时尽量不要对在读写的数据造成困扰。所以MappedFile自己实现了引用计数器功能，只有存在引用时才会执行刷盘操作
+     * @return
+     */
     public synchronized boolean hold() {
         if (this.isAvailable()) {
             if (this.refCount.getAndIncrement() > 0) {

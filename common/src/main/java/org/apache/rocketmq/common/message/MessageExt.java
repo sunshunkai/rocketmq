@@ -30,6 +30,9 @@ public class MessageExt extends Message {
     private int storeSize;
 
     private long queueOffset;
+    /**
+     * @see MessageSysFlag
+     */
     private int sysFlag;
     private long bornTimestamp;
     private SocketAddress bornHost;
@@ -39,6 +42,7 @@ public class MessageExt extends Message {
     private String msgId;
     private long commitLogOffset;
     private int bodyCRC;
+    // 消息重试消费次数
     private int reconsumeTimes;
 
     private long preparedTransactionOffset;

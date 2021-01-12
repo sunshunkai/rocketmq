@@ -132,7 +132,7 @@ public abstract class ServiceThread implements Runnable {
             return;
         }
 
-        //entry to wait
+        //entry to wait  waitPoint基于CountDownLatch重写的CountDownLatch2，增加重置功能
         waitPoint.reset();
 
         try {
