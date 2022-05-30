@@ -85,6 +85,9 @@ public class NamesrvStartup {
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setListenPort(9876);
+
+        // 如果启动参数带上“-c” ，那就读取配置文件的内容，配置文件按行配置，key=value
+        // 可配置内容参考 NamesrvConfig 和 NettyServerConfig
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
@@ -102,6 +105,7 @@ public class NamesrvStartup {
             }
         }
 
+        // 如果启动参数带上“-p”，就是把nameServer的所有参数打印出来，并退出
         if (commandLine.hasOption('p')) {
             InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_CONSOLE_NAME);
             MixAll.printObjectProperties(console, namesrvConfig);
@@ -109,6 +113,7 @@ public class NamesrvStartup {
             System.exit(0);
         }
 
+        // 把mqnamesrv命令行中的配置，都读出来放到NamesrvConfig中去
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), namesrvConfig);
 
         if (null == namesrvConfig.getRocketmqHome()) {
@@ -124,9 +129,11 @@ public class NamesrvStartup {
 
         log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
+        // 打印配置信息
         MixAll.printObjectProperties(log, namesrvConfig);
         MixAll.printObjectProperties(log, nettyServerConfig);
 
+        // NamesrvController组件封装了nameSrv和nettyServer的核心配置
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard

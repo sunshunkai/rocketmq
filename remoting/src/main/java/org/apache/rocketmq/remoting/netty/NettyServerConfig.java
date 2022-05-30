@@ -17,16 +17,33 @@
 package org.apache.rocketmq.remoting.netty;
 
 public class NettyServerConfig implements Cloneable {
+
+    //Netty监听的端口号，外面已经设置成9876了
     private int listenPort = 8888;
+
+    //Netty的工作线程数量，默认8
     private int serverWorkerThreads = 8;
+
+    //Netty的public线程池的线程数量
     private int serverCallbackExecutorThreads = 0;
+
+    //Netty的IO线程池中线程数，负责解析网络请求，完事交给work线程处理
     private int serverSelectorThreads = 3;
+
+    //Broker在使用Netty时，会使用
     private int serverOnewaySemaphoreValue = 256;
     private int serverAsyncSemaphoreValue = 64;
+
+    //一个网络连接空闲超过120s，就会被关闭
     private int serverChannelMaxIdleTimeSeconds = 120;
 
+    //sorket send buffer缓冲区大小
     private int serverSocketSndBufSize = NettySystemConfig.socketSndbufSize;
+
+    //receive buffer缓冲区大小
     private int serverSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
+
+    //ByteBuffer是否开启缓存，默认开启
     private boolean serverPooledByteBufAllocatorEnable = true;
 
     /**
@@ -36,6 +53,7 @@ public class NettyServerConfig implements Cloneable {
      * ../glibc-2.10.1/configure \ --prefix=/usr \ --with-headers=/usr/include \
      * --host=x86_64-linux-gnu \ --build=x86_64-pc-linux-gnu \ --without-gd
      */
+    //是否开启epoll IO模型
     private boolean useEpollNativeSelector = false;
 
     public int getListenPort() {
