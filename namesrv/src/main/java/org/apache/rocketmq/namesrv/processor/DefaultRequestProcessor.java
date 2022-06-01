@@ -342,6 +342,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
         TopicRouteData topicRouteData = this.namesrvController.getRouteInfoManager().pickupTopicRouteData(requestHeader.getTopic());
 
+        // 如果找到主题对应你的路由信息并且该主题为顺序消息，则从NameServer KVConfig中获取 关于顺序消息相关的配置填充路由信息
         if (topicRouteData != null) {
             if (this.namesrvController.getNamesrvConfig().isOrderMessageEnable()) {
                 String orderTopicConf =

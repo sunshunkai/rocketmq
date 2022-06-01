@@ -43,6 +43,9 @@ public class KVConfigManager {
         this.namesrvController = namesrvController;
     }
 
+    /**
+     * 将磁盘配置文件加载到内存中
+     */
     public void load() {
         String content = null;
         try {
@@ -89,6 +92,9 @@ public class KVConfigManager {
         this.persist();
     }
 
+    /**
+     * 持久化到磁盘中
+     */
     public void persist() {
         try {
             this.lock.readLock().lockInterruptibly();

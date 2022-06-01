@@ -81,7 +81,7 @@ public class NamesrvController {
         // 初始化nettyRomote线程池，默认8个，该线程池中队列为LinkedBlockingQueue，为无界队列
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-        // 注册requestProcessor，默认为DefaultRequestProcessor，用来处理netty接收到的信息
+        // //注册Netty服务端业务处理逻辑，如果开启了clusterTest，那么注册的请求处理类是ClusterTestRequestProcessor，否则请求处理类是DefaultRequestProcessor
         this.registerProcessor();
         // 启动定时线程，延迟5秒执行，每隔10s判断broker是否依然存活
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -100,6 +100,7 @@ public class NamesrvController {
             }
         }, 1, 1, TimeUnit.MINUTES);
 
+        // rocketmq可以通过开启TLS来提高数据传输的安全性，如果开启了，那么需要注册一个监听器来重新加载SslContext
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
             try {
@@ -154,7 +155,7 @@ public class NamesrvController {
 
     public void start() throws Exception {
         this.remotingServer.start();
-
+        // 如果开启了TLS
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }

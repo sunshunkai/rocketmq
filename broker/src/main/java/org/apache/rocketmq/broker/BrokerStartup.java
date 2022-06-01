@@ -214,7 +214,7 @@ public class BrokerStartup {
                 messageStoreConfig);
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
-
+            // 初始化磁盘数据
             boolean initResult = controller.initialize();
             if (!initResult) {
                 controller.shutdown();

@@ -31,20 +31,37 @@ public class BrokerConfig {
     private String rocketmqHome = System.getProperty(MixAll.ROCKETMQ_HOME_PROPERTY, System.getenv(MixAll.ROCKETMQ_HOME_ENV));
     @ImportantField
     private String namesrvAddr = System.getProperty(MixAll.NAMESRV_ADDR_PROPERTY, System.getenv(MixAll.NAMESRV_ADDR_ENV));
+
+    // 当前 broker 监听的 IP，默认值 网卡的 InetAddress
     @ImportantField
     private String brokerIP1 = RemotingUtil.getLocalAddress();
+
+    // 存在主从 broker 时，如果在 broker 主节点上配置了 brokerIP2 属性，broker 从节点会连接主节点配置的 brokerIP2 进行同步
     private String brokerIP2 = RemotingUtil.getLocalAddress();
+
+    // broker名称，用于主从配对，相同名称的broker才能做主从设置
     @ImportantField
     private String brokerName = localHostName();
+
+    // broker集群名称，用于划分broker
     @ImportantField
     private String brokerClusterName = "DefaultCluster";
+
+    // 用于标识主从关系，0为主，其他大于0的为从（不能小于0）master设置0，slave设置1。Master角色的Broker支持读和写，
+    // Slave角色的Broker仅支持读，也就是Producer只能和Master角色的Broker连接写人消息：Consumer可以连接Master角色的Broker，
+    // 也可以连接Slave角色的Broker来读取消息。Master节点设置
     @ImportantField
     private long brokerId = MixAll.MASTER_ID;
     private int brokerPermission = PermName.PERM_READ | PermName.PERM_WRITE;
+
+    // 创建topic时，若未指定topic下的队列数，则取该默认值作为默认队列数
     private int defaultTopicQueueNums = 8;
+
+    // 是否自动创建默认topic，生产需保持关闭
     @ImportantField
     private boolean autoCreateTopicEnable = true;
 
+    // 是否自动创建topic的订阅组，默认开启
     private boolean clusterTopicEnable = true;
 
     private boolean brokerTopicEnable = true;
